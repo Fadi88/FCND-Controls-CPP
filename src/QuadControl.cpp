@@ -210,13 +210,12 @@ float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, flo
     
     auto z_error = posZCmd - posZ;
     auto z_d_error = velZCmd - velZ;
-    
     integratedAltitudeError += z_error * dt;
     
-    auto u1 = z_error * this->kpPosZ + z_d_error * this->kpVelZ + integratedAltitudeError * this->KiPosZ + accelZCmd;
+    auto u1 = z_error * this->kpPosZ + z_d_error * this->kpVelZ + this->integratedAltitudeError * this->KiPosZ + accelZCmd;
+    auto c = (u1-9.81)/ R(2,2);
+    thrust = -this->mass * c;
     
-    thrust = - this->mass * CONSTRAIN((u1 - 9.81)/R(2,2), -this->maxDescentRate, this->maxAscentRate);
-
     /////////////////////////////// END STUDENT CODE ////////////////////////////
     
     return thrust;
