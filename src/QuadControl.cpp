@@ -207,6 +207,7 @@ float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, flo
     
     ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
     
+    // FIXME
     auto z_error = posZCmd - posZ;
     auto z_c = CONSTRAIN((this->kpPosZ * z_error) + velZCmd, -this->maxDescentRate, this->maxAscentRate);
     
@@ -296,6 +297,7 @@ float QuadControl::YawControl(float yawCmd, float yaw)
     
     float yawRateCmd = 0;
     ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+    // FIXME
     auto yaw_error = fmodf(yawCmd - yaw + 2 * F_PI, 2 * F_PI);
     yawRateCmd = yaw_error * this->kpYaw;
     
