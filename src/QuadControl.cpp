@@ -160,12 +160,13 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
      
      r_d = np.matmul(r_,np.array([b_x_n,b_y_n]).T)
      */
-    // TODO : FIX
     auto b_x = R(0, 2);
     auto b_y = R(1, 2);
     
-    auto b_x_error = (-accelCmd.x / (collThrustCmd / this->mass)) - b_x;
-    auto b_y_error = (-accelCmd.y / (collThrustCmd / this->mass)) - b_y;
+    auto c = - collThrustCmd / this->mass;
+    
+    auto b_x_error = CONSTRAIN(-accelCmd.x / c, -this->maxTiltAngle, this->maxTiltAngle) - b_x;
+    auto b_y_error = CONSTRAIN(-accelCmd.y / c, -this->maxTiltAngle, this->maxTiltAngle) - b_y;
     
     auto b_x_n = this->kpBank * b_x_error;
     auto b_y_n = this->kpBank * b_y_error;
@@ -207,15 +208,15 @@ float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, flo
     
     ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
     
-    // FIXME
     auto z_error = posZCmd - posZ;
-    auto z_c = CONSTRAIN((this->kpPosZ * z_error) + velZCmd, -this->maxDescentRate, this->maxAscentRate);
+    auto z_d_error = velZCmd - velZ;
     
-    auto b_z = R(2, 2);
+    integratedAltitudeError += z_error * dt;
     
-    auto z_dd = this->kpVelZ * (z_c - velZ) + accelZCmd;
-    thrust = -this->mass * (z_dd - 9.81) / b_z;
+    auto u1 = z_error * this->kpPosZ + z_d_error * this->kpVelZ + integratedAltitudeError * this->KiPosZ + accelZCmd;
     
+    thrust = - this->mass * CONSTRAIN((u1 - 9.81)/R(2,2), -this->maxDescentRate, this->maxAscentRate);
+
     /////////////////////////////// END STUDENT CODE ////////////////////////////
     
     return thrust;
