@@ -83,10 +83,17 @@ VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momen
     float F4 = (collThrustCmd - p - q - r) / 4.;
     
     // std::cout << F1 << " " << F2 << " " << " " << F3 << " " << F4 << std::endl;
-    cmd.desiredThrustsN[0] = CONSTRAIN(F1, this->minMotorThrust, this->maxMotorThrust);
-    cmd.desiredThrustsN[1] = CONSTRAIN(F2, this->minMotorThrust, this->maxMotorThrust);
-    cmd.desiredThrustsN[2] = CONSTRAIN(F3, this->minMotorThrust, this->maxMotorThrust);
-    cmd.desiredThrustsN[3] = CONSTRAIN(F4, this->minMotorThrust, this->maxMotorThrust);
+    cmd.desiredThrustsN[0] = CONSTRAIN(F1, -this->minMotorThrust, this->maxMotorThrust);
+    cmd.desiredThrustsN[1] = CONSTRAIN(F2, -this->minMotorThrust, this->maxMotorThrust);
+    cmd.desiredThrustsN[2] = CONSTRAIN(F3, -this->minMotorThrust, this->maxMotorThrust);
+    cmd.desiredThrustsN[3] = CONSTRAIN(F4, -this->minMotorThrust, this->maxMotorThrust);
+    
+    // must override for scn 5
+    cmd.desiredThrustsN[0] = F1;
+    cmd.desiredThrustsN[1] = F2;
+    cmd.desiredThrustsN[2] = F3;
+    cmd.desiredThrustsN[3] = F4;
+
     /////////////////////////////// END STUDENT CODE ////////////////////////////
     
     return cmd;
@@ -166,8 +173,8 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
         
         auto c = - collThrustCmd / this->mass;
         
-        auto b_x_error = CONSTRAIN(-accelCmd.x / c, -this->maxTiltAngle, this->maxTiltAngle) - b_x;
-        auto b_y_error = CONSTRAIN(-accelCmd.y / c, -this->maxTiltAngle, this->maxTiltAngle) - b_y;
+        auto b_x_error = CONSTRAIN(accelCmd.x / c, -this->maxTiltAngle, this->maxTiltAngle) - b_x;
+        auto b_y_error = CONSTRAIN(accelCmd.y / c, -this->maxTiltAngle, this->maxTiltAngle) - b_y;
         
         auto b_x_n = this->kpBank * b_x_error;
         auto b_y_n = this->kpBank * b_y_error;
@@ -268,7 +275,6 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
      
      return x/c,y/c
      */
-    // TODO : FIX
     auto x_error = posCmd.x - pos.x;
     auto y_error = posCmd.y - pos.y;
     
