@@ -160,22 +160,27 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
      
      r_d = np.matmul(r_,np.array([b_x_n,b_y_n]).T)
      */
-    auto b_x = R(0, 2);
-    auto b_y = R(1, 2);
-    
-    auto c = - collThrustCmd / this->mass;
-    
-    auto b_x_error = CONSTRAIN(-accelCmd.x / c, -this->maxTiltAngle, this->maxTiltAngle) - b_x;
-    auto b_y_error = CONSTRAIN(-accelCmd.y / c, -this->maxTiltAngle, this->maxTiltAngle) - b_y;
-    
-    auto b_x_n = this->kpBank * b_x_error;
-    auto b_y_n = this->kpBank * b_y_error;
-    
-    auto p_r = (R(1, 0) * b_x_n - R(0, 0) * b_y_n) / R(2, 2);
-    auto q_r = (R(1, 1) * b_x_n - R(0, 1) * b_y_n) / R(2, 2);
-    
-    pqrCmd.x = p_r;
-    pqrCmd.y = q_r;
+    if (collThrustCmd > 0) {
+        auto b_x = R(0, 2);
+        auto b_y = R(1, 2);
+        
+        auto c = - collThrustCmd / this->mass;
+        
+        auto b_x_error = CONSTRAIN(-accelCmd.x / c, -this->maxTiltAngle, this->maxTiltAngle) - b_x;
+        auto b_y_error = CONSTRAIN(-accelCmd.y / c, -this->maxTiltAngle, this->maxTiltAngle) - b_y;
+        
+        auto b_x_n = this->kpBank * b_x_error;
+        auto b_y_n = this->kpBank * b_y_error;
+        
+        auto p_r = (R(1, 0) * b_x_n - R(0, 0) * b_y_n) / R(2, 2);
+        auto q_r = (R(1, 1) * b_x_n - R(0, 1) * b_y_n) / R(2, 2);
+        
+        pqrCmd.x = p_r;
+        pqrCmd.y = q_r;
+    } else {
+        pqrCmd.x = 0;
+        pqrCmd.y = 0;
+    }
     pqrCmd.z = 0;
     
     /////////////////////////////// END STUDENT CODE ////////////////////////////
@@ -270,13 +275,12 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
     auto x_dot_error = velCmd.x - vel.x;
     auto y_dot_error = velCmd.y - vel.y;
     
-    auto x = x_error * this->kpPosXY + x_dot_error * this->kpVelXY + accelCmdFF.x;
-    auto y = y_error * this->kpPosXY + y_dot_error * this->kpVelXY + accelCmdFF.y;
+    auto x = x_error * this->kpPosXY + x_dot_error * this->kpVelXY;
+    auto y = y_error * this->kpPosXY + y_dot_error * this->kpVelXY;
     
-    accelCmd.x = CONSTRAIN(accelCmd.x + x, 0, this->maxAccelXY);
-    accelCmd.y = CONSTRAIN(accelCmd.y + y, 0, this->maxAccelXY);
+    accelCmd.x += x;
+    accelCmd.y += y;
     accelCmd.z = 0.0f;
-    
     /////////////////////////////// END STUDENT CODE ////////////////////////////
     
     return accelCmd;
@@ -297,10 +301,8 @@ float QuadControl::YawControl(float yawCmd, float yaw)
     
     float yawRateCmd = 0;
     ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-    // FIXME
-    auto yaw_error = fmodf(yawCmd - yaw + 2 * F_PI, 2 * F_PI);
+    auto yaw_error = fmodf(yawCmd, 2 * F_PI)  - yaw;
     yawRateCmd = yaw_error * this->kpYaw;
-    
     /////////////////////////////// END STUDENT CODE ////////////////////////////
     
     return yawRateCmd;
